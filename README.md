@@ -31,7 +31,7 @@ To classify vectors we training 3 different classifiers with comparing results a
 Research in notebook -> embedding_representations.ipynb
 Demo script with camera capture -> simple_online_demo.py
 
-Example demo:
+Example demo (54 sec):
 
 ![](gifs/demo.gif)
 
