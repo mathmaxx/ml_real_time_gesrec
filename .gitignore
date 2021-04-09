@@ -26,6 +26,7 @@ results/val_resnext.json
 opts.json
 
 # Distribution / packaging
+.idea
 .Python
 env/
 build/

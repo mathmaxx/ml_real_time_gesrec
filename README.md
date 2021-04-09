@@ -1,6 +1,13 @@
 #  Hand gesture recognition
 
 [![License](http://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/Solvve/ml_job_classifier/blob/master/LICENSE.txt)
+[![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/release/python-380/)
+[![scikit-learn 0.23.2](https://img.shields.io/badge/scikit_learn-0.24.1-blue)](https://scikit-learn.org/stable/)
+[![pandas 1.2.3](https://img.shields.io/badge/pandas-1.2.3-blue)](https://pypi.org/project/pandas/)
+[![numpy 1.20.2](https://img.shields.io/badge/numpy-1.20.2-blue)](https://numpy.org/install/)
+[![torch 0.23.2](https://img.shields.io/badge/torch-1.8.1-blue)](https://pytorch.org/)
+[![Solvve](https://img.shields.io/badge/made%20in-solvve-blue)](https://solvve.com/)
+
 
 ## Description
 
@@ -23,3 +30,8 @@ To classify vectors we training 3 different classifiers with comparing results a
 
 Research in notebook -> embedding_representations.ipynb
 Demo script with camera capture -> simple_online_demo.py
+
+Example demo:
+
+![](url)
+

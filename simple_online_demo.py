@@ -212,7 +212,8 @@ if __name__ == '__main__':
 
 
                 else:
-                    text = 'Validation gesture is: {}, diff: {}'.format(class_validation, diff)
+                    # text = 'Validation gesture is: {}, diff: {}'.format(class_validation, diff)
+                    text = 'Validation gesture is: {}'.format(class_validation)
                     cv2.putText(frame, text, (10, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
                     cv2.imshow('frame', frame)
 
