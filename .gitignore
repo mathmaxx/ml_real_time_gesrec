@@ -14,6 +14,14 @@ __pycache__/
 # model weights
 *.pth
 
+# dump
+*.dump
+
+# json
+results/val.json
+results/test.json
+results/val_resnext.json
+
 # opts file
 opts.json
 

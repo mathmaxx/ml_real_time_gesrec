@@ -89,7 +89,9 @@ class ResNeXt(nn.Module):
                  sample_duration,
                  shortcut_type='B',
                  cardinality=32,
-                 num_classes=400):
+                 num_classes=400,
+                 no_fc=False):
+        self.no_fc = no_fc
         self.inplanes = 64
         super(ResNeXt, self).__init__()
         self.conv1 = nn.Conv3d(
@@ -122,7 +124,8 @@ class ResNeXt(nn.Module):
         last_size = int(math.ceil(sample_size / 32))
         self.avgpool = nn.AvgPool3d(
             (last_duration, last_size, last_size), stride=1)
-        self.fc = nn.Linear(cardinality * 32 * block.expansion, num_classes)
+        if not no_fc:
+            self.fc = nn.Linear(cardinality * 32 * block.expansion, num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv3d):
@@ -177,7 +180,8 @@ class ResNeXt(nn.Module):
         x = self.avgpool(x)
 
         x = x.view(x.size(0), -1)
-        x = self.fc(x)
+        if not self.no_fc:
+            x = self.fc(x)
 
         return x
 

@@ -144,11 +144,14 @@ if __name__ == '__main__':
     best_prec1 = 0
     if opt.resume_path:
         print('loading checkpoint {}'.format(opt.resume_path))
-        checkpoint = torch.load(opt.resume_path)
-        assert opt.arch == checkpoint['arch']
+        # model = torch.nn.Sequential(*(list(model.children())[:-1]))
+        checkpoint = torch.load(opt.resume_path,  map_location=torch.device('cpu'))
+        # assert opt.arch == checkpoint['arch']
         best_prec1 = checkpoint['best_prec1']
         opt.begin_epoch = checkpoint['epoch']
-        model.load_state_dict(checkpoint['state_dict'])
+        pretrained_dict = {key.replace("module.", "module."): value for key, value in checkpoint['state_dict'].items()}
+        model.load_state_dict(pretrained_dict, strict=True)
+        # model.load_state_dict(checkpoint['state_dict'])
 
 
     print('run')
@@ -196,7 +199,7 @@ if __name__ == '__main__':
                                  target_transform)
         test_loader = torch.utils.data.DataLoader(
             test_data,
-            batch_size=40,
+            batch_size=2,
             shuffle=False,
             num_workers=opt.n_threads,
             pin_memory=True)

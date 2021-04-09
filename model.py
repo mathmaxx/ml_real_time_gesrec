@@ -39,7 +39,8 @@ def generate_model(opt):
         model = mobilenet.get_model(
             num_classes=opt.n_classes,
             sample_size=opt.sample_size,
-            width_mult=opt.width_mult)
+            width_mult=opt.width_mult,
+            no_fc=opt.no_fc)
     elif opt.model == 'mobilenetv2':
         from models.mobilenetv2 import get_fine_tuning_parameters
         model = mobilenetv2.get_model(
@@ -62,7 +63,8 @@ def generate_model(opt):
                 shortcut_type=opt.resnet_shortcut,
                 cardinality=opt.resnext_cardinality,
                 sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
+                sample_duration=opt.sample_duration,
+                no_fc=opt.no_fc)
         elif opt.model_depth == 152:
             model = resnext.resnext152(
                 num_classes=opt.n_classes,
@@ -138,7 +140,7 @@ def generate_model(opt):
 
         if opt.pretrain_path:
             print('loading pretrained model {}'.format(opt.pretrain_path))
-            pretrain = torch.load(opt.pretrain_path, map_location=torch.device('cpu'))
+            pretrain = torch.load(opt.pretrain_path)
             # print(opt.arch)
             # print(pretrain['arch'])
             # assert opt.arch == pretrain['arch']
@@ -158,7 +160,7 @@ def generate_model(opt):
                                 nn.ReLU(inplace=True),
                                 nn.AvgPool3d((1,4,4), stride=1))
                 model.module.classifier = model.module.classifier.cuda()
-            else:
+            elif not opt.no_fc:
                 model.module.fc = nn.Linear(model.module.fc.in_features, opt.n_finetune_classes)
                 model.module.fc = model.module.fc.cuda()
 
@@ -171,10 +173,12 @@ def generate_model(opt):
     else:
         if opt.pretrain_path:
             print('loading pretrained model {}'.format(opt.pretrain_path))
-            pretrain = torch.load(opt.pretrain_path)
+            pretrain = torch.load(opt.pretrain_path,  map_location=torch.device('cpu'))
 
             model = modify_kernels(opt, model, opt.pretrain_modality)
-            model.load_state_dict(pretrain['state_dict'])
+            pretrained_dict = {key.replace("module.", ""): value for key, value in pretrain['state_dict'].items()}
+            model.load_state_dict(pretrained_dict, strict=False)
+            # model.load_state_dict(pretrain['state_dict'])
 
             
 
@@ -189,12 +193,15 @@ def generate_model(opt):
                                 nn.Conv3d(model.module.classifier[1].in_channels, opt.n_finetune_classes, kernel_size=1),
                                 nn.ReLU(inplace=True),
                                 nn.AvgPool3d((1,4,4), stride=1))
-            else:
-                model.module.fc = nn.Linear(model.module.fc.in_features, opt.n_finetune_classes)
+            elif not opt.no_fc:
+                if not opt.no_cuda:
+                    model.module.fc = nn.Linear(model.module.fc.in_features, opt.n_finetune_classes)
+                else:
+                    model.fc = nn.Linear(model.fc.in_features, opt.n_finetune_classes)
 
             model = modify_kernels(opt, model, opt.modality)
-            parameters = get_fine_tuning_parameters(model, opt.ft_begin_index)
-            return model, parameters
+            # parameters = get_fine_tuning_parameters(model, opt.ft_begin_index)
+            return model, None
         else:
             model = modify_kernels(opt, model, opt.modality)
 
@@ -272,7 +279,11 @@ def _modify_first_conv_layer(base_model, new_kernel_size1, new_filter_num):
 def modify_kernels(opt, model, modality):
     if modality == 'RGB' and opt.model not in ['c3d', 'squeezenet', 'mobilenet','shufflenet', 'mobilenetv2', 'shufflenetv2']:
         print("[INFO]: RGB model is used for init model")
-        model = _modify_first_conv_layer(model,3,3) ##### Check models trained (3,7,7) or (7,7,7)
+        if opt.model_depth==10:
+            model = _modify_first_conv_layer(model, 3, 3)
+        else:
+            model = _modify_first_conv_layer(model,7,3) ##### Check models trained (3,7,7) or (7,7,7)
+        #model = _modify_first_conv_layer(model, 7, 3)
     elif modality == 'Depth':
         print("[INFO]: Converting the pretrained model to Depth init model")
         model = _construct_depth_model(model)

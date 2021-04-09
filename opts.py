@@ -52,6 +52,9 @@ def parse_opts():
     parser.add_argument('--crop_position_in_test', default='c', type=str, help='Cropping method (c | tl | tr | bl | br) in test')
     parser.add_argument('--no_softmax_in_test', action='store_true', help='If true, output for each clip is not normalized using softmax.')
     parser.set_defaults(no_softmax_in_test=False)
+    parser.add_argument('--no_fc', action='store_true', help='If true, will work without fc.')
+    parser.set_defaults(no_fc=False)
+    parser.add_argument('--save_result', default='json',  help='Save test results to json or embedding dump.')
     parser.add_argument('--no_cuda', action='store_true', help='If true, cuda is not used.')
     parser.set_defaults(no_cuda=False)
     parser.add_argument('--n_threads', default=16, type=int, help='Number of threads for multi-thread loading')
@@ -157,6 +160,8 @@ def parse_opts_online():
     parser.add_argument('--no_softmax_in_test', action='store_true',
                         help='If true, output for each clip is not normalized using softmax.')
     parser.set_defaults(no_softmax_in_test=False)
+    parser.add_argument('--no_fc', action='store_true', help='If true, will work without fc.')
+    parser.set_defaults(no_fc=False)
     parser.add_argument('--no_cuda', action='store_true', help='If true, cuda is not used.')
     parser.set_defaults(no_cuda=False)
     parser.add_argument('--n_threads', default=4, type=int, help='Number of threads for multi-thread loading')

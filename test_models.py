@@ -167,7 +167,7 @@ with open('annotation_Something/categories.txt') as f:
     lines = f.readlines()
     categories = [item.rstrip() for item in lines]
 
-name_list = [x.strip().split()[0] for x in open('annotation_Something/testlist01.txt')]
+name_list = [x.strip().split()[0] for x in open('annotation_Something/testlist.txt')]
 order_dict = {e:i for i, e in enumerate(sorted(name_list))}
 reorder_output = [None] * len(recorder)
 reorder_pred = [None] * len(recorder)
