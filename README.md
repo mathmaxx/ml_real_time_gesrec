@@ -33,5 +33,5 @@ Demo script with camera capture -> simple_online_demo.py
 
 Example demo:
 
-![](url)
+![](gifs/demo.gif)
 
