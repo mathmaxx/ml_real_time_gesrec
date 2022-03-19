@@ -536,11 +536,11 @@ class ServerRTC(object):
 
         # prepare local media
         player = MediaPlayer("demo-instruct.wav")
-        if args.record_to:
-            recorder = MediaRecorder(args.record_to)
-        else:
-            recorder = MediaBlackhole()
-
+        # if args.record_to:
+        #     recorder = MediaRecorder(args.record_to)
+        # else:
+        #     recorder = MediaBlackhole()
+        recorder = MediaBlackhole()
         origin_vtt = VideoTransformTrack()
 
         @pc.on("datachannel")
@@ -568,8 +568,8 @@ class ServerRTC(object):
             elif track.kind == "video":
                 origin_vtt.prepare(track, params["video_transform"], self.options)
                 pc.addTrack(origin_vtt)
-                if args.record_to:
-                    recorder.addTrack(relay.subscribe(track))
+                # if args.record_to:
+                #     recorder.addTrack(relay.subscribe(track))
 
             @track.on("ended")
             async def on_ended():
