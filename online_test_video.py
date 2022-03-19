@@ -149,6 +149,7 @@ def load_models(opt):
     return detector, classifier
 
 
+opt = parse_opts_online()
 
 ROOT = os.path.dirname(__file__)
 
@@ -166,8 +167,11 @@ class VideoTransformTrack(MediaStreamTrack):
 
     kind = "video"
 
-    def __init__(self, track, transform):
-        super().__init__()  # don't forget this!
+    def __int__(self):
+        super().__init__()
+
+    def prepare(self, track, transform, options):
+        # super().__init__()  # don't forget this!
         self.track = track
         self.transform = transform
         self._thread = threading.Thread(target=self._run_worker_thread)
@@ -183,7 +187,7 @@ class VideoTransformTrack(MediaStreamTrack):
         self.ws_queue = queue.Queue()
         self.ws_thread = threading.Thread(target=self.start_ws)
 
-        self.opt = parse_opts_online()
+        self.opt = options
         self.detector, self.classifier = load_models(self.opt)
 
         if self.opt.no_mean_norm and not self.opt.std_norm:
@@ -223,6 +227,7 @@ class VideoTransformTrack(MediaStreamTrack):
         with open("annotation_EgoGesture/classIndAll.txt") as file:
             for l in file:
                 self.x.append(l.strip())
+
 
     engaged = 0
     COLOCK = 0
@@ -503,103 +508,95 @@ class VideoTransformTrack(MediaStreamTrack):
                 return frame
 
 
-async def index(request):
-    content = open("index.html", "r").read()
-    return web.Response(content_type="text/html", text=content)
+class ServerRTC(object):
+    options = None
+
+    async def index(self, request):
+        content = open("index.html", "r").read()
+        return web.Response(content_type="text/html", text=content)
 
 
-async def javascript(request):
-    content = open("client.js", "r").read()
-    return web.Response(content_type="application/javascript", text=content)
+    async def javascript(self, request):
+        content = open("client.js", "r").read()
+        return web.Response(content_type="application/javascript", text=content)
 
 
-async def offer(request):
-    params = await request.json()
-    offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
+    async def offer(self, request):
+        params = await request.json()
+        offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
-    pc = RTCPeerConnection()
-    pc_id = "PeerConnection(%s)" % uuid.uuid4()
-    pcs.add(pc)
+        pc = RTCPeerConnection()
+        pc_id = "PeerConnection(%s)" % uuid.uuid4()
+        pcs.add(pc)
 
-    def log_info(msg, *args):
-        logger.info(pc_id + " " + msg, *args)
+        def log_info(msg, *args):
+            logger.info(pc_id + " " + msg, *args)
 
-    log_info("Created for %s", request.remote)
+        log_info("Created for %s", request.remote)
 
-    # prepare local media
-    player = MediaPlayer("demo-instruct.wav")
-    if args.record_to:
-        recorder = MediaRecorder(args.record_to)
-    else:
-        recorder = MediaBlackhole()
+        # prepare local media
+        player = MediaPlayer("demo-instruct.wav")
+        if args.record_to:
+            recorder = MediaRecorder(args.record_to)
+        else:
+            recorder = MediaBlackhole()
 
-    @pc.on("datachannel")
-    def on_datachannel(channel):
-        @channel.on("message")
-        def on_message(message):
-            if isinstance(message, str) and message.startswith("ping"):
-                channel.send("pong" + message[4:])
+        origin_vtt = VideoTransformTrack()
 
-    @pc.on("connectionstatechange")
-    async def on_connectionstatechange():
-        log_info("Connection state is %s", pc.connectionState)
-        if pc.connectionState == "failed":
-            await pc.close()
-            pcs.discard(pc)
+        @pc.on("datachannel")
+        def on_datachannel(channel):
+            origin_vtt.data_channel = channel
+            @channel.on("message")
+            def on_message(message):
+                if isinstance(message, str) and message.startswith("ping"):
+                    channel.send(json.dumps({"tmps": int(time.time())}))
 
-    @pc.on("track")
-    def on_track(track):
-        log_info("Track %s received", track.kind)
+        @pc.on("connectionstatechange")
+        async def on_connectionstatechange():
+            log_info("Connection state is %s", pc.connectionState)
+            if pc.connectionState == "failed":
+                await pc.close()
+                pcs.discard(pc)
 
-        if track.kind == "audio":
-            pc.addTrack(player.audio)
-            recorder.addTrack(track)
-        elif track.kind == "video":
-            pc.addTrack(
-                VideoTransformTrack(
-                    relay.subscribe(track), transform=params["video_transform"]
-                )
-            )
-            if args.record_to:
-                recorder.addTrack(relay.subscribe(track))
+        @pc.on("track")
+        def on_track(track):
+            log_info("Track %s received", track.kind)
 
-        @track.on("ended")
-        async def on_ended():
-            log_info("Track %s ended", track.kind)
-            await recorder.stop()
+            if track.kind == "audio":
+                pc.addTrack(player.audio)
+                recorder.addTrack(track)
+            elif track.kind == "video":
+                origin_vtt.prepare(track, params["video_transform"], self.options)
+                pc.addTrack(origin_vtt)
+                if args.record_to:
+                    recorder.addTrack(relay.subscribe(track))
 
-    # handle offer
-    # await pc.setRemoteDescription(offer)
-    # await recorder.start()
+            @track.on("ended")
+            async def on_ended():
+                log_info("Track %s ended", track.kind)
+                await recorder.stop()
 
-    try:
+        # handle offer
         await pc.setRemoteDescription(offer)
         await recorder.start()
-    except Exception:
-        logger.error("Error occurred in the WebRTC thread:")
 
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        for tb in traceback.format_exception(exc_type, exc_value, exc_traceback):
-            for tbline in tb.rstrip().splitlines():
-                logger.error(tbline.rstrip())
+        # send answer
+        answer = await pc.createAnswer()
+        await pc.setLocalDescription(answer)
 
-    # send answer
-    answer = await pc.createAnswer()
-    await pc.setLocalDescription(answer)
-
-    return web.Response(
-        content_type="application/json",
-        text=json.dumps(
-            {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
-        ),
-    )
+        return web.Response(
+            content_type="application/json",
+            text=json.dumps(
+                {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
+            ),
+        )
 
 
-async def on_shutdown(app):
-    # close peer connections
-    coros = [pc.close() for pc in pcs]
-    await asyncio.gather(*coros)
-    pcs.clear()
+    async def on_shutdown(self, app):
+        # close peer connections
+        coros = [pc.close() for pc in pcs]
+        await asyncio.gather(*coros)
+        pcs.clear()
 
 
 if __name__ == "__main__":
@@ -612,7 +609,7 @@ if __name__ == "__main__":
         "--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)"
     )
     parser.add_argument(
-        "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
+        "--port", type=int, default=5000, help="Port for HTTP server (default: 8080)"
     )
     parser.add_argument("--record-to", help="Write received media to a file."),
     parser.add_argument("--verbose", "-v", action="count")
@@ -623,17 +620,19 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(level=logging.INFO)
 
-    if args.cert_file is not None:
+    if args.cert_file is None:
         ssl_context = ssl.SSLContext()
         ssl_context.load_cert_chain("example.crt", "example.key")
     else:
         ssl_context = None
-
+    sv = ServerRTC()
+    sv.options = opt
     app = web.Application()
-    app.on_shutdown.append(on_shutdown)
-    app.router.add_get("/", index)
-    app.router.add_get("/client.js", javascript)
-    app.router.add_post("/offer", offer)
+    app.on_shutdown.append(sv.on_shutdown)
+    app.router.add_get("/", sv.index)
+    app.router.add_get("/client.js", sv.javascript)
+    app.router.add_post("/offer", sv.offer)
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
     )
+    
