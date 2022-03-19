@@ -17,7 +17,7 @@ import time
 
 
 from utils import AverageMeter, calculate_accuracy
-from models import squeezenet, shufflenetv2, shufflenet, mobilenet, mobilenetv2, c3d, resnetl
+from models_loc import squeezenet, shufflenetv2, shufflenet, mobilenet, mobilenetv2, c3d, resnetl
 
 
 model_folder = 'results'
@@ -150,7 +150,7 @@ if __name__ == "__main__":
 # from torch.autograd import Variable
 
 # from utils import AverageMeter, calculate_accuracy
-# from models import squeezenet, shufflenetv2, shufflenet, mobilenet, mobilenetv2, c3d, resnetl
+# from models_loc import squeezenet, shufflenetv2, shufflenet, mobilenet, mobilenetv2, c3d, resnetl
 
 # try:
 #     from apex.parallel import DistributedDataParallel as DDP

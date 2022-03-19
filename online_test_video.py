@@ -25,7 +25,7 @@ import numpy as np
 import datetime
 
 
-###Pretrained RGB models
+###Pretrained RGB models_loc
 ##Google Drive
 #https://drive.google.com/file/d/1V23zvjAKZr7FUOBLpgPZkpHGv8_D-cOs/view?usp=sharing
 ##Baidu Netdisk

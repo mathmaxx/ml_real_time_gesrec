@@ -1,6 +1,6 @@
 import torch.nn as nn
 from thop import profile
-from models import squeezenet, shufflenetv2, shufflenet, mobilenet, mobilenetv2, c3d, resnext, resnet
+from models_loc import squeezenet, shufflenetv2, shufflenet, mobilenet, mobilenetv2, c3d, resnext, resnet
 
 # %%%%%%%%--------------------- SELECT THE MODEL BELOW ---------------------%%%%%%%%
 
