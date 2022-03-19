@@ -282,7 +282,7 @@ def modify_kernels(opt, model, modality):
         if opt.model_depth==10:
             model = _modify_first_conv_layer(model, 3, 3)
         else:
-            model = _modify_first_conv_layer(model,7,3) ##### Check models_loc trained (3,7,7) or (7,7,7)
+            model = _modify_first_conv_layer(model,3,3) ##### Check models_loc trained (3,7,7) or (7,7,7)
         #model = _modify_first_conv_layer(model, 7, 3)
     elif modality == 'Depth':
         print("[INFO]: Converting the pretrained model to Depth init model")
