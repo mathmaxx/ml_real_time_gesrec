@@ -623,7 +623,7 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(level=logging.INFO)
 
-    if args.cert_file is None:
+    if args.cert_file is not None:
         ssl_context = ssl.SSLContext()
         ssl_context.load_cert_chain("example.crt", "example.key")
     else:
