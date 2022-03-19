@@ -504,12 +504,12 @@ class VideoTransformTrack(MediaStreamTrack):
 
 
 async def index(request):
-    content = open(os.path.join(ROOT, "index.html"), "r").read()
+    content = open("index.html", "r").read()
     return web.Response(content_type="text/html", text=content)
 
 
 async def javascript(request):
-    content = open(os.path.join(ROOT, "client.js"), "r").read()
+    content = open("client.js", "r").read()
     return web.Response(content_type="application/javascript", text=content)
 
 
@@ -527,7 +527,7 @@ async def offer(request):
     log_info("Created for %s", request.remote)
 
     # prepare local media
-    player = MediaPlayer(os.path.join(ROOT, "demo-instruct.wav"))
+    player = MediaPlayer("demo-instruct.wav")
     if args.record_to:
         recorder = MediaRecorder(args.record_to)
     else:
@@ -609,7 +609,7 @@ if __name__ == "__main__":
     parser.add_argument("--cert-file", help="SSL certificate file (for HTTPS)")
     parser.add_argument("--key-file", help="SSL key file (for HTTPS)")
     parser.add_argument(
-        "--host", default="127.0.0.1", help="Host for HTTP server (default: 0.0.0.0)"
+        "--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)"
     )
     parser.add_argument(
         "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
