@@ -323,13 +323,13 @@ class VideoTransformTrack(MediaStreamTrack):
                 self.passive_count = 0
 
                 if self.opt.clf_strategy == 'raw':
-                    clf_selected_queue = outputs_clf
+                    self.clf_selected_queue = outputs_clf
                 elif self.opt.clf_strategy == 'median':
-                    clf_selected_queue = self.myqueue_clf.median
+                    self.clf_selected_queue = self.myqueue_clf.median
                 elif self.opt.clf_strategy == 'ma':
-                    clf_selected_queue = self.myqueue_clf.ma
+                    self.clf_selected_queue = self.myqueue_clf.ma
                 elif self.opt.clf_strategy == 'ewma':
-                    clf_selected_queue = self.myqueue_clf.ewma
+                    self.clf_selected_queue = self.myqueue_clf.ewma
 
             else:
                 outputs_clf = np.zeros(self.opt.n_classes_clf, )
@@ -346,8 +346,8 @@ class VideoTransformTrack(MediaStreamTrack):
         if active:
             self.active_index += 1
             self.cum_sum = ((self.cum_sum * (self.active_index - 1)) + (
-                        weighting_func(self.active_index) * clf_selected_queue)) / self.active_index  # Weighted Aproach
-            # self.cum_sum = ((self.cum_sum * (self.active_index-1)) + (1.0 * clf_selected_queue))/self.active_index #Not Weighting Aproach
+                        weighting_func(self.active_index) * self.clf_selected_queue)) / self.active_index  # Weighted Aproach
+            # self.cum_sum = ((self.cum_sum * (self.active_index-1)) + (1.0 * self.clf_selected_queue))/self.active_index #Not Weighting Aproach
             best2, best1 = tuple(self.cum_sum.argsort()[-2:][::1])
             if float(self.cum_sum[best1] - self.cum_sum[best2]) > self.opt.clf_threshold_pre:
                 self.finished_prediction = True
@@ -626,7 +626,7 @@ if __name__ == "__main__":
     # else:
     #     ssl_context = None
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     ssl_context = ssl.SSLContext()
     ssl_context.load_cert_chain("example.crt", "example.key")
 
