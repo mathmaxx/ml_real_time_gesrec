@@ -240,7 +240,8 @@ class VideoTransformTrack(MediaStreamTrack):
         frame_np = cv2.resize(img, (640, 480), cv2.INTER_AREA)
         frame_np = cv2.flip(frame_np, 1)
         frame_np = self.inference(frame_np)
-        view_np = cv2.cvtColor(frame_np, cv2.COLOR_RGB2BGR)
+        # view_np = cv2.cvtColor(frame_np, cv2.COLOR_RGB2BGR)
+        view_np = frame_np
 
         now = time.time()
         if now - self.COLOCK > 1:
